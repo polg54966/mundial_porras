@@ -1,0 +1,197 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  font-family:
+    Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #14213d;
+  background: #ffffff;
+}
+
+.calendar-page {
+  width: min(96vw, 1120px);
+  margin: 0 auto;
+  padding: 20px 0 40px;
+}
+
+.page-header {
+  margin-bottom: 20px;
+}
+
+.page-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.page-nav a {
+  display: inline-block;
+  color: #0b7a53;
+  font-weight: 800;
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+
+.page-nav .prediction-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  color: #ffffff;
+  background: #0b7a53;
+}
+
+.page-nav .prediction-button:hover {
+  background: #096744;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(1.8rem, 5vw, 3rem);
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.field {
+  display: grid;
+  gap: 8px;
+}
+
+.field label {
+  font-weight: 800;
+  font-size: 1rem;
+}
+
+input[type="text"],
+select {
+  width: min(100%, 320px);
+  min-height: 38px;
+  padding: 10px 12px;
+  border: 1px solid #c8d3df;
+  border-radius: 8px;
+  font: inherit;
+}
+
+.calendar-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.calendar-summary {
+  margin-bottom: 12px;
+  color: #526170;
+  font-weight: 800;
+}
+
+.calendar-list {
+  display: grid;
+  gap: 18px;
+}
+
+.calendar-day {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.calendar-day h2 {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 1.15rem;
+  text-transform: uppercase;
+}
+
+.match-card {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid #dbe3ea;
+  border-radius: 8px;
+}
+
+.match-meta,
+.match-teams {
+  display: grid;
+  align-items: center;
+  gap: 10px;
+}
+
+.match-meta {
+  grid-template-columns: 1fr auto;
+  color: #526170;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.match-teams {
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.match-team {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.match-team-away {
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.match-team span {
+  min-width: 0;
+}
+
+.match-flag {
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+.match-status,
+.match-score {
+  min-width: 86px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  text-align: center;
+}
+
+.match-status {
+  color: #526170;
+  background: #eef2f6;
+  font-size: 0.82rem;
+}
+
+.match-score {
+  color: #ffffff;
+  background: #0b7a53;
+}
+
+@media (max-width: 900px) {
+  .calendar-day {
+    grid-template-columns: 1fr;
+  }
+
+  .match-teams {
+    grid-template-columns: 1fr;
+  }
+
+  .match-team,
+  .match-team-away {
+    justify-content: center;
+    text-align: center;
+  }
+}

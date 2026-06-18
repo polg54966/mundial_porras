@@ -1,0 +1,240 @@
+<!-- <!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ranking</title>
+    <link rel="stylesheet" href="ranking.css" />
+  </head>
+
+  <body>
+    <main class="ranking-page">
+      <header class="page-header">
+        <a href="index.html">Volver</a>
+        <h1>Ranking</h1>
+      </header>
+
+      <section class="ranking-list" aria-label="Clasificaci&oacute;n">
+        <article class="ranking-card ranking-card-leader">
+          <div class="rank-position">1</div>
+          <div class="rank-user">
+            <strong>Marc</strong>
+            <span>6 resultados exactos</span>
+          </div>
+          <div class="rank-points">42 pts</div>
+        </article>
+
+        <article class="ranking-card">
+          <div class="rank-position">2</div>
+          <div class="rank-user">
+            <strong>Laura</strong>
+            <span>5 resultados exactos</span>
+          </div>
+          <div class="rank-points">38 pts</div>
+        </article>
+
+        <article class="ranking-card">
+          <div class="rank-position">3</div>
+          <div class="rank-user">
+            <strong>Pol</strong>
+            <span>4 resultados exactos</span>
+          </div>
+          <div class="rank-points">34 pts</div>
+        </article>
+
+        <article class="ranking-card">
+          <div class="rank-position">4</div>
+          <div class="rank-user">
+            <strong>Anna</strong>
+            <span>3 resultados exactos</span>
+          </div>
+          <div class="rank-points">29 pts</div>
+        </article>
+
+        <article class="ranking-card">
+          <div class="rank-position">5</div>
+          <div class="rank-user">
+            <strong>Jordi</strong>
+            <span>2 resultados exactos</span>
+          </div>
+          <div class="rank-points">24 pts</div>
+        </article>
+      </section>
+    </main>
+  </body>
+</html> -->
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ranking</title>
+    <link rel="stylesheet" href="ranking.css" />
+  </head>
+
+  <body>
+    <main class="ranking-page">
+      <header class="page-header">
+        <a href="index.html">Volver</a>
+        <h1>Ranking</h1>
+      </header>
+
+      <section
+        class="ranking-list"
+        id="ranking-list"
+        aria-label="Clasificación"
+      >
+        <p>Cargando ranking...</p>
+      </section>
+    </main>
+
+    <script>
+      const API_URL =
+        "https://script.google.com/macros/s/AKfycbzkMbjAfx8uDI248AInI0TxeqbZcrgirJhVVebTQJQUJ8odO2_zjDFFiJDzCOmcty9Pmg/exec";
+
+      const rankingList = document.getElementById("ranking-list");
+
+      function getGanador(local, visitante) {
+        if (local > visitante) return "local";
+        if (visitante > local) return "visitante";
+        return "empate";
+      }
+
+      function calcularPuntos(pronostico, partido) {
+        const predLocal = Number(pronostico.predLocal);
+        const predVisitante = Number(pronostico.predVisitante);
+        const golesLocal = Number(partido.golesLocal);
+        const golesVisitante = Number(partido.golesVisitante);
+
+        if (
+          Number.isNaN(predLocal) ||
+          Number.isNaN(predVisitante) ||
+          Number.isNaN(golesLocal) ||
+          Number.isNaN(golesVisitante)
+        ) {
+          return {
+            puntos: 0,
+            exacto: false,
+          };
+        }
+
+        if (predLocal === golesLocal && predVisitante === golesVisitante) {
+          return {
+            puntos: 3,
+            exacto: true,
+          };
+        }
+
+        const ganadorPredicho = getGanador(predLocal, predVisitante);
+        const ganadorReal = getGanador(golesLocal, golesVisitante);
+
+        if (ganadorPredicho === ganadorReal) {
+          return {
+            puntos: 1,
+            exacto: false,
+          };
+        }
+
+        return {
+          puntos: 0,
+          exacto: false,
+        };
+      }
+
+      function calcularRanking(participantes, partidos, pronosticos) {
+        const partidosCerrados = partidos.filter((partido) => {
+          return String(partido.cerrado).toUpperCase() === "TRUE";
+        });
+
+        return participantes
+          .map((participante) => {
+            let puntos = 0;
+            let exactos = 0;
+
+            partidosCerrados.forEach((partido) => {
+              const pronostico = pronosticos.find((p) => {
+                return (
+                  String(p.participanteId) === String(participante.idUser) &&
+                  String(p.partidoId) === String(partido.idPartido)
+                );
+              });
+
+              if (!pronostico) return;
+
+              const resultado = calcularPuntos(pronostico, partido);
+
+              puntos += resultado.puntos;
+
+              if (resultado.exacto) {
+                exactos++;
+              }
+            });
+
+            return {
+              idUser: participante.idUser,
+              nombre: participante.nombre,
+              puntos: puntos,
+              exactos: exactos,
+            };
+          })
+          .sort((a, b) => {
+            if (b.puntos !== a.puntos) return b.puntos - a.puntos;
+            return b.exactos - a.exactos;
+          });
+      }
+
+      function pintarRanking(ranking) {
+        if (ranking.length === 0) {
+          rankingList.innerHTML = "<p>No hay participantes todavía.</p>";
+          return;
+        }
+
+        rankingList.innerHTML = "";
+
+        ranking.forEach((usuario, index) => {
+          const posicion = index + 1;
+
+          const card = document.createElement("article");
+          card.className =
+            posicion === 1
+              ? "ranking-card ranking-card-leader"
+              : "ranking-card";
+
+          card.innerHTML = `
+            <div class="rank-position">${posicion}</div>
+
+            <div class="rank-user">
+              <strong>${usuario.nombre}</strong>
+              <span>${usuario.exactos} resultados exactos</span>
+            </div>
+
+            <div class="rank-points">${usuario.puntos} pts</div>
+          `;
+
+          rankingList.append(card);
+        });
+      }
+
+      async function cargarRanking() {
+        try {
+          const response = await fetch(API_URL);
+          const data = await response.json();
+
+          const participantes = data.participantes || [];
+          const partidos = data.partidos || [];
+          const pronosticos = data.pronosticos || [];
+
+          const ranking = calcularRanking(participantes, partidos, pronosticos);
+
+          pintarRanking(ranking);
+        } catch (error) {
+          console.error(error);
+          rankingList.innerHTML = "<p>No se ha podido cargar el ranking.</p>";
+        }
+      }
+
+      cargarRanking();
+    </script>
+  </body>
+</html>

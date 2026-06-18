@@ -1,0 +1,111 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  font-family:
+    Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #14213d;
+  background: #ffffff;
+}
+
+.ranking-page {
+  width: min(96vw, 900px);
+  margin: 0 auto;
+  padding: 20px 0 40px;
+}
+
+.page-header {
+  margin-bottom: 20px;
+}
+
+.page-header a {
+  display: inline-block;
+  margin-bottom: 12px;
+  color: #0b7a53;
+  font-weight: 800;
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(1.8rem, 5vw, 3rem);
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.rank-user span {
+  color: #526170;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.ranking-list {
+  display: grid;
+  gap: 10px;
+}
+
+.ranking-card {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 72px;
+  padding: 12px;
+  border: 1px solid #dbe3ea;
+  border-radius: 8px;
+}
+
+.ranking-card-leader {
+  border-color: #0b7a53;
+  background: #f4fbf7;
+}
+
+.rank-position {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 50%;
+  color: #0b7a53;
+  background: #e9f5ef;
+  font-weight: 900;
+}
+
+.ranking-card-leader .rank-position {
+  color: #ffffff;
+  background: #0b7a53;
+}
+
+.rank-user {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.rank-user strong {
+  overflow: hidden;
+  font-size: 1.05rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rank-points {
+  color: #0b7a53;
+  font-size: 1.1rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+@media (max-width: 620px) {
+  .ranking-card {
+    grid-template-columns: 38px minmax(0, 1fr);
+  }
+
+  .rank-points {
+    grid-column: 2;
+  }
+}

@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hacer predicci&oacute;n</title>
+    <link rel="stylesheet" href="porra.css" />
+  </head>
+
+  <body>
+    <main class="prediction-page">
+      <header class="page-header">
+        <a href="index.html">Volver</a>
+        <h1>Hacer predicci&oacute;n</h1>
+      </header>
+
+      <form class="prediction-form" id="prediction-form">
+        <div class="field participant-field">
+          <label for="participante">Nombre</label>
+          <select id="participante" required>
+            <option value="">Cargando participantes...</option>
+          </select>
+        </div>
+
+        <div class="prediction-summary" id="prediction-summary">
+          Cargando partidos...
+        </div>
+
+        <div class="prediction-list" id="partidos-container">
+          <p>Cargando pr&oacute;ximos partidos...</p>
+        </div>
+
+        <button type="submit">Enviar predicciones</button>
+      </form>
+    </main>
+
+    <script>
+      const API_URL =
+        "https://script.google.com/macros/s/AKfycbzkMbjAfx8uDI248AInI0TxeqbZcrgirJhVVebTQJQUJ8odO2_zjDFFiJDzCOmcty9Pmg/exec";
+
+      const participanteSelect = document.getElementById("participante");
+      const partidosContainer = document.getElementById("partidos-container");
+      const predictionSummary = document.getElementById("prediction-summary");
+      const form = document.getElementById("prediction-form");
+      const MATCH_LIMIT = 15;
+
+      let proximosPartidos = [];
+
+      const flags = {
+        Alemania: "Alemania_48x48.png",
+        "Arabia Saudita": "Arabia_Saudita_48x48.png",
+        Argelia: "Argelia_48x48.png",
+        Argentina: "Argentina_48x48.png",
+        Australia: "Australia_48x48.png",
+        Austria: "Austria_48x48.png",
+        Belgica: "Belgica_48x48.png",
+        "Bosnia y Herzegovina": "Bosnia_Herzegovina_48x48.png",
+        Brasil: "Brasil_48x48.png",
+        "Cabo Verde": "Cabo_Verde_48x48.png",
+        Canada: "Canada_48x48.png",
+        Catar: "Catar_48x48.png",
+        Chequia: "Chequia_48x48.png",
+        Colombia: "Colombia_48x48.png",
+        "Corea del Sur": "Corea_Sur_48x48.png",
+        "Costa de Marfil": "Costa_Marfil_48x48.png",
+        Croacia: "Croacia_48x48.png",
+        Curazao: "Curazao_48x48.png",
+        Ecuador: "Ecuador_48x48.png",
+        Egipto: "Egipto_48x48.png",
+        Escocia: "Escocia_48x48.png",
+        Espana: "Espa\u00f1a_48x48.png",
+        "Estados Unidos": "Estados_Unidos_48x48.png",
+        Francia: "Francia_48x48.png",
+        Ghana: "Ghana_48x48.png",
+        Haiti: "Hait\u00ed_48x48.png",
+        Inglaterra: "Inglaterra_48x48.png",
+        Irak: "Irak_48x48.png",
+        Iran: "Iran_48x48.png",
+        Japon: "Japon_48x48.png",
+        Jordania: "Jordania_48x48.png",
+        Marruecos: "Marruecos_48x48.png",
+        Mexico: "Mexico_48x48.png",
+        Noruega: "Noruega_48x48.png",
+        "Nueva Zelanda": "Nueva_Zelanda_48x48.png",
+        "Paises Bajos": "Paises_Bajos_48x48.png",
+        Panama: "Panama_48x48.png",
+        Paraguay: "Paraguay_48x48.png",
+        Portugal: "Portugal_48x48.png",
+        "RD Congo": "RD_Congo_48x48.png",
+        Senegal: "Senegal_48x48.png",
+        Sudafrica: "Sudafrica_48x48.png",
+        Suecia: "Suecia_48x48.png",
+        Suiza: "Suiza_48x48.png",
+        Tunez: "Tunez_48x48.png",
+        Turquia: "Turquia_48x48.png",
+        Uruguay: "Uruguay_48x48.png",
+        Uzbekistan: "Uzbekistan_48x48.png",
+        "Por definir": "None_48x48.png",
+      };
+
+      function getMatchDate(partido) {
+        const [dia, mes] = String(partido.fecha).split("/").map(Number);
+        const [hora = 0, minutos = 0] = String(partido.hora || "0:00")
+          .split(":")
+          .map(Number);
+        const hoy = new Date();
+        const matchDate = new Date(
+          hoy.getFullYear(),
+          mes - 1,
+          dia,
+          hora,
+          minutos,
+        );
+
+        if (matchDate < hoy && mes < hoy.getMonth() + 1) {
+          matchDate.setFullYear(hoy.getFullYear() + 1);
+        }
+
+        return matchDate;
+      }
+
+      function getFlag(team) {
+        const flag = flags[team];
+
+        if (!flag) {
+          return "";
+        }
+
+        return `<img class="match-flag" src="images/${flag}" alt="" />`;
+      }
+
+      function getTeam(team, side) {
+        const flagImage = getFlag(team);
+
+        return `
+          <span class="match-team match-team-${side}">
+            ${side === "home" ? flagImage : ""}
+            <span>${team}</span>
+            ${side === "away" ? flagImage : ""}
+          </span>
+        `;
+      }
+
+      async function cargarDatos() {
+        try {
+          const response = await fetch(API_URL);
+          const data = await response.json();
+
+          cargarParticipantes(data.participantes || []);
+          cargarProximosPartidos(data.partidos || []);
+        } catch (error) {
+          console.error(error);
+          participanteSelect.innerHTML =
+            '<option value="">Error al cargar participantes</option>';
+          predictionSummary.textContent = "No se han podido cargar los partidos.";
+          partidosContainer.innerHTML =
+            "<p>No se han podido cargar los partidos.</p>";
+        }
+      }
+
+      function cargarParticipantes(participantes) {
+        participanteSelect.innerHTML =
+          '<option value="">Selecciona tu nombre</option>';
+
+        participantes.forEach((participante) => {
+          const option = document.createElement("option");
+          option.value = participante.idUser;
+          option.textContent = participante.nombre;
+          participanteSelect.append(option);
+        });
+      }
+
+      function cargarProximosPartidos(partidos) {
+        const ahora = new Date();
+
+        proximosPartidos = partidos
+          .filter((partido) => {
+            return partido.cerrado === "FALSE" && getMatchDate(partido) >= ahora;
+          })
+          .sort((a, b) => getMatchDate(a) - getMatchDate(b))
+          .slice(0, MATCH_LIMIT);
+
+        predictionSummary.textContent = `${proximosPartidos.length} partidos cargados`;
+
+        if (proximosPartidos.length === 0) {
+          partidosContainer.innerHTML =
+            "<p>No hay partidos disponibles para pronosticar.</p>";
+          return;
+        }
+
+        partidosContainer.innerHTML = "";
+
+        const groupedByDate = proximosPartidos.reduce((dates, partido) => {
+          if (!dates.has(partido.fecha)) {
+            dates.set(partido.fecha, []);
+          }
+
+          dates.get(partido.fecha).push(partido);
+          return dates;
+        }, new Map());
+
+        groupedByDate.forEach((dateMatches, date) => {
+          const heading = document.createElement("h2");
+          heading.className = "prediction-date";
+          heading.textContent = date;
+          partidosContainer.append(heading);
+
+          dateMatches.forEach((partido) => {
+          const card = document.createElement("article");
+          card.className = "match-card";
+
+          card.innerHTML = `
+            <div class="match-meta">
+              <span>${partido.grupo}</span>
+              <span>${partido.hora}</span>
+            </div>
+
+            <div class="match-prediction">
+              ${getTeam(partido.local, "home")}
+
+              <div class="score-inputs" aria-label="Predicci&oacute;n del resultado">
+                <input
+                  type="number"
+                  min="0"
+                  required
+                  aria-label="Goles de ${partido.local}"
+                  data-partido-id="${partido.idPartido}"
+                  data-tipo="local"
+                />
+                <span>-</span>
+                <input
+                  type="number"
+                  min="0"
+                  required
+                  aria-label="Goles de ${partido.visitante}"
+                  data-partido-id="${partido.idPartido}"
+                  data-tipo="visitante"
+                />
+              </div>
+
+              ${getTeam(partido.visitante, "away")}
+            </div>
+          `;
+
+          partidosContainer.append(card);
+        });
+        });
+      }
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        const participanteId = participanteSelect.value;
+
+        if (!participanteId) {
+          alert("Selecciona tu nombre.");
+          return;
+        }
+
+        const fechaEnvio = new Date().toLocaleString("es-ES");
+
+        const pronosticos = proximosPartidos.map((partido) => {
+          const predLocal = document.querySelector(
+            `input[data-partido-id="${partido.idPartido}"][data-tipo="local"]`,
+          ).value;
+
+          const predVisitante = document.querySelector(
+            `input[data-partido-id="${partido.idPartido}"][data-tipo="visitante"]`,
+          ).value;
+
+          return {
+            participanteId: participanteId,
+            partidoId: partido.idPartido,
+            predLocal: predLocal,
+            predVisitante: predVisitante,
+            fechaEnvio: fechaEnvio,
+          };
+        });
+
+        try {
+          const response = await fetch(API_URL, {
+            method: "POST",
+            body: JSON.stringify({
+              pronosticos: pronosticos,
+            }),
+          });
+
+          const result = await response.json();
+
+          if (result.ok) {
+            alert("Predicciones enviadas correctamente.");
+            form.reset();
+            cargarDatos();
+          } else {
+            alert("Error al guardar: " + result.error);
+          }
+        } catch (error) {
+          console.error(error);
+          alert("No se han podido enviar las predicciones.");
+        }
+      });
+
+      cargarDatos();
+    </script>
+  </body>
+</html>
