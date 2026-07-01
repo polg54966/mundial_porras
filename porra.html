@@ -45,6 +45,7 @@
       const MATCH_LIMIT = 15;
 
       let proximosPartidos = [];
+      let pronosticosGuardados = [];
 
       const flags = {
         Alemania: "Alemania_48x48.png",
@@ -146,6 +147,7 @@
           const response = await fetch(API_URL);
           const data = await response.json();
 
+          pronosticosGuardados = data.pronosticos || [];
           cargarParticipantes(data.participantes || []);
           cargarProximosPartidos(data.partidos || []);
         } catch (error) {
@@ -167,6 +169,53 @@
           option.value = participante.idUser;
           option.textContent = participante.nombre;
           participanteSelect.append(option);
+        });
+      }
+
+      function cargarPronosticosParticipante() {
+        const participanteId = participanteSelect.value;
+        const inputs = partidosContainer.querySelectorAll("input[data-partido-id]");
+
+        inputs.forEach((input) => {
+          input.value = "";
+        });
+
+        if (!participanteId) {
+          return;
+        }
+
+        const pronosticosPorPartido = pronosticosGuardados.reduce(
+          (pronosticos, pronostico) => {
+            if (String(pronostico.participanteId) === String(participanteId)) {
+              pronosticos.set(String(pronostico.partidoId), pronostico);
+            }
+
+            return pronosticos;
+          },
+          new Map(),
+        );
+
+        proximosPartidos.forEach((partido) => {
+          const pronostico = pronosticosPorPartido.get(String(partido.idPartido));
+
+          if (!pronostico) {
+            return;
+          }
+
+          const inputLocal = partidosContainer.querySelector(
+            `input[data-partido-id="${partido.idPartido}"][data-tipo="local"]`,
+          );
+          const inputVisitante = partidosContainer.querySelector(
+            `input[data-partido-id="${partido.idPartido}"][data-tipo="visitante"]`,
+          );
+
+          if (inputLocal && pronostico.predLocal !== undefined) {
+            inputLocal.value = pronostico.predLocal;
+          }
+
+          if (inputVisitante && pronostico.predVisitante !== undefined) {
+            inputVisitante.value = pronostico.predVisitante;
+          }
         });
       }
 
@@ -245,7 +294,11 @@
           partidosContainer.append(card);
         });
         });
+
+        cargarPronosticosParticipante();
       }
+
+      participanteSelect.addEventListener("change", cargarPronosticosParticipante);
 
       form.addEventListener("submit", async (event) => {
         event.preventDefault();
