@@ -98,6 +98,10 @@ select {
   border-radius: 8px;
 }
 
+.match-card-pending {
+  background: #f7f9fb;
+}
+
 .match-meta,
 .match-prediction {
   display: grid;
@@ -154,6 +158,12 @@ select {
   padding: 8px;
   text-align: center;
   font-weight: 800;
+}
+
+.score-inputs input:disabled {
+  color: #8a97a5;
+  background: #eef2f6;
+  cursor: not-allowed;
 }
 
 .score-inputs span {

@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Eliminatoria</title>
+    <link rel="stylesheet" href="eliminatoria.css" />
+  </head>
+
+  <body>
+    <main class="bracket-page">
+      <header class="page-header">
+        <nav class="page-nav" aria-label="Navegaci&oacute;n de eliminatoria">
+          <a href="index.html">Volver</a>
+          <a class="prediction-button" href="porra.html">Hacer predicci&oacute;n</a>
+        </nav>
+        <h1>Eliminatoria</h1>
+      </header>
+
+      <div class="bracket-summary" id="bracket-summary">
+        Cargando eliminatoria...
+      </div>
+
+      <section class="bracket-scroll" aria-label="Cuadro eliminatorio">
+        <div class="bracket" id="bracket"></div>
+      </section>
+    </main>
+
+    <script>
+      const API_URL =
+        "https://script.google.com/macros/s/AKfycbxg7uSYAwe_g42SN__C0n8K-5xWTjtm4qDKs1zm1aBK-Q2EGOBPdV-I1j4TRrtc5Yaffw/exec";
+
+      const bracket = document.getElementById("bracket");
+      const summary = document.getElementById("bracket-summary");
+
+      const rounds = [
+        "Eliminatoria de 32",
+        "Octavos de final",
+        "Cuartos de final",
+        "Semifinales",
+        "Final",
+      ];
+
+      const flags = {
+        Alemania: "Alemania_48x48.png",
+        "Arabia Saudita": "Arabia_Saudita_48x48.png",
+        Argelia: "Argelia_48x48.png",
+        Argentina: "Argentina_48x48.png",
+        Australia: "Australia_48x48.png",
+        Austria: "Austria_48x48.png",
+        Belgica: "Belgica_48x48.png",
+        "Bosnia y Herzegovina": "Bosnia_Herzegovina_48x48.png",
+        Brasil: "Brasil_48x48.png",
+        "Cabo Verde": "Cabo_Verde_48x48.png",
+        Canada: "Canada_48x48.png",
+        Catar: "Catar_48x48.png",
+        Chequia: "Chequia_48x48.png",
+        Colombia: "Colombia_48x48.png",
+        "Corea del Sur": "Corea_Sur_48x48.png",
+        "Costa de Marfil": "Costa_Marfil_48x48.png",
+        Croacia: "Croacia_48x48.png",
+        Curazao: "Curazao_48x48.png",
+        Ecuador: "Ecuador_48x48.png",
+        Egipto: "Egipto_48x48.png",
+        Escocia: "Escocia_48x48.png",
+        Espana: "Espa\u00f1a_48x48.png",
+        "Estados Unidos": "Estados_Unidos_48x48.png",
+        Francia: "Francia_48x48.png",
+        Ghana: "Ghana_48x48.png",
+        Haiti: "Hait\u00ed_48x48.png",
+        Inglaterra: "Inglaterra_48x48.png",
+        Irak: "Irak_48x48.png",
+        Iran: "Iran_48x48.png",
+        Japon: "Japon_48x48.png",
+        Jordania: "Jordania_48x48.png",
+        Marruecos: "Marruecos_48x48.png",
+        Mexico: "Mexico_48x48.png",
+        Noruega: "Noruega_48x48.png",
+        "Nueva Zelanda": "Nueva_Zelanda_48x48.png",
+        "Paises Bajos": "Paises_Bajos_48x48.png",
+        Panama: "Panama_48x48.png",
+        Paraguay: "Paraguay_48x48.png",
+        Portugal: "Portugal_48x48.png",
+        "RD Congo": "RD_Congo_48x48.png",
+        Senegal: "Senegal_48x48.png",
+        Sudafrica: "Sudafrica_48x48.png",
+        Suecia: "Suecia_48x48.png",
+        Suiza: "Suiza_48x48.png",
+        Tunez: "Tunez_48x48.png",
+        Turquia: "Turquia_48x48.png",
+        Uruguay: "Uruguay_48x48.png",
+        Uzbekistan: "Uzbekistan_48x48.png",
+        "Por definir": "None_48x48.png",
+      };
+
+      function hasResult(match) {
+        return match.golesLocal !== "" && match.golesVisitante !== "";
+      }
+
+      function getWinner(match) {
+        if (!hasResult(match)) {
+          return "";
+        }
+
+        const homeGoals = Number(match.golesLocal);
+        const awayGoals = Number(match.golesVisitante);
+
+        if (homeGoals > awayGoals) {
+          return "home";
+        }
+
+        if (awayGoals > homeGoals) {
+          return "away";
+        }
+
+        return "";
+      }
+
+      function getFlag(team) {
+        const flag = flags[team];
+
+        if (!flag) {
+          return "";
+        }
+
+        return `<img class="team-flag" src="images/${flag}" alt="" />`;
+      }
+
+      function getTeamRow(match, side) {
+        const team = side === "home" ? match.local : match.visitante;
+        const goals = side === "home" ? match.golesLocal : match.golesVisitante;
+        const winner = getWinner(match) === side;
+        const pending = team === "Por definir";
+
+        return `
+          <div class="team-row ${winner ? "team-winner" : ""} ${pending ? "team-pending" : ""}">
+            <span class="team-name">
+              ${getFlag(team)}
+              <span>${team}</span>
+            </span>
+            <span class="team-score">${hasResult(match) ? goals : ""}</span>
+          </div>
+        `;
+      }
+
+      function getStatus(match) {
+        if (hasResult(match)) {
+          return "Final";
+        }
+
+        return match.cerrado === "TRUE" ? "Cerrado" : "Pendiente";
+      }
+
+      function renderMatch(match) {
+        return `
+          <article class="bracket-match">
+            <div class="match-meta">
+              <span>${match.fecha}, ${match.hora}</span>
+              <span>${getStatus(match)}</span>
+            </div>
+            ${getTeamRow(match, "home")}
+            ${getTeamRow(match, "away")}
+          </article>
+        `;
+      }
+
+      function renderBracket(matches) {
+        const knockoutMatches = matches.filter((match) =>
+          rounds.includes(match.grupo),
+        );
+
+        summary.textContent = `${knockoutMatches.length} partidos de eliminatoria`;
+        bracket.innerHTML = "";
+
+        if (knockoutMatches.length === 0) {
+          bracket.innerHTML = "<p>No hay partidos de eliminatoria disponibles.</p>";
+          return;
+        }
+
+        rounds.forEach((round) => {
+          const roundMatches = knockoutMatches.filter(
+            (match) => match.grupo === round,
+          );
+
+          if (roundMatches.length === 0) {
+            return;
+          }
+
+          const column = document.createElement("section");
+          column.className = "bracket-round";
+          column.innerHTML = `
+            <h2>${round}</h2>
+            <div class="round-matches">
+              ${roundMatches.map(renderMatch).join("")}
+            </div>
+          `;
+
+          bracket.append(column);
+        });
+      }
+
+      async function loadBracket() {
+        try {
+          const response = await fetch(API_URL);
+          const data = await response.json();
+
+          renderBracket(data.partidos || []);
+        } catch (error) {
+          console.error(error);
+          summary.textContent = "No se ha podido cargar la eliminatoria.";
+          bracket.innerHTML = "<p>No se ha podido cargar la eliminatoria.</p>";
+        }
+      }
+
+      loadBracket();
+    </script>
+  </body>
+</html>

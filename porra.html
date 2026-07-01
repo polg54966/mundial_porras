@@ -142,6 +142,10 @@
         `;
       }
 
+      function isPendingMatch(partido) {
+        return partido.local === "Por definir" || partido.visitante === "Por definir";
+      }
+
       async function cargarDatos() {
         try {
           const response = await fetch(API_URL);
@@ -172,6 +176,16 @@
         });
       }
 
+      function getPronosticosParticipante(participanteId) {
+        return pronosticosGuardados.reduce((pronosticos, pronostico) => {
+          if (String(pronostico.participanteId) === String(participanteId)) {
+            pronosticos.set(String(pronostico.partidoId), pronostico);
+          }
+
+          return pronosticos;
+        }, new Map());
+      }
+
       function cargarPronosticosParticipante() {
         const participanteId = participanteSelect.value;
         const inputs = partidosContainer.querySelectorAll("input[data-partido-id]");
@@ -184,16 +198,7 @@
           return;
         }
 
-        const pronosticosPorPartido = pronosticosGuardados.reduce(
-          (pronosticos, pronostico) => {
-            if (String(pronostico.participanteId) === String(participanteId)) {
-              pronosticos.set(String(pronostico.partidoId), pronostico);
-            }
-
-            return pronosticos;
-          },
-          new Map(),
-        );
+        const pronosticosPorPartido = getPronosticosParticipante(participanteId);
 
         proximosPartidos.forEach((partido) => {
           const pronostico = pronosticosPorPartido.get(String(partido.idPartido));
@@ -255,13 +260,14 @@
           partidosContainer.append(heading);
 
           dateMatches.forEach((partido) => {
+          const isPending = isPendingMatch(partido);
           const card = document.createElement("article");
-          card.className = "match-card";
+          card.className = `match-card ${isPending ? "match-card-pending" : ""}`;
 
           card.innerHTML = `
             <div class="match-meta">
               <span>${partido.grupo}</span>
-              <span>${partido.hora}</span>
+              <span>${isPending ? "Pendiente de definir" : partido.hora}</span>
             </div>
 
             <div class="match-prediction">
@@ -271,7 +277,7 @@
                 <input
                   type="number"
                   min="0"
-                  required
+                  ${isPending ? "disabled" : "required"}
                   aria-label="Goles de ${partido.local}"
                   data-partido-id="${partido.idPartido}"
                   data-tipo="local"
@@ -280,7 +286,7 @@
                 <input
                   type="number"
                   min="0"
-                  required
+                  ${isPending ? "disabled" : "required"}
                   aria-label="Goles de ${partido.visitante}"
                   data-partido-id="${partido.idPartido}"
                   data-tipo="visitante"
@@ -311,8 +317,14 @@
         }
 
         const fechaEnvio = new Date().toLocaleString("es-ES");
+        const pronosticosPorPartido = getPronosticosParticipante(participanteId);
 
-        const pronosticos = proximosPartidos.map((partido) => {
+        const pronosticos = proximosPartidos
+          .filter((partido) => !isPendingMatch(partido))
+          .map((partido) => {
+          const pronosticoGuardado = pronosticosPorPartido.get(
+            String(partido.idPartido),
+          );
           const predLocal = document.querySelector(
             `input[data-partido-id="${partido.idPartido}"][data-tipo="local"]`,
           ).value;
@@ -322,6 +334,7 @@
           ).value;
 
           return {
+            idPronostico: pronosticoGuardado?.idPronostico || "",
             participanteId: participanteId,
             partidoId: partido.idPartido,
             predLocal: predLocal,
@@ -329,6 +342,11 @@
             fechaEnvio: fechaEnvio,
           };
         });
+
+        if (pronosticos.length === 0) {
+          alert("No hay partidos con equipos definidos para guardar.");
+          return;
+        }
 
         try {
           const response = await fetch(API_URL, {
